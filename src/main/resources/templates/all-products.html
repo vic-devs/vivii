@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Products</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .main-content {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .filters {
+            flex: 0 0 250px;
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-section {
+            margin-bottom: 1.5rem;
+        }
+        .filter-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .filter-options label {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .product-grid {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+        .product-card {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .product-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+        .product-card a {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            text-decoration: none;
+            color: inherit;
+        }
+        .product-image {
+            height: 150px;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .product-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .product-info {
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .product-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+        .product-price {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #B12704;
+            margin-bottom: 0.25rem;
+        }
+        .product-stock {
+            font-size: 0.8rem;
+            color: #007600;
+            margin-bottom: 0.25rem;
+        }
+        .product-category {
+            font-size: 0.7rem;
+            color: #565959;
+            margin-top: auto;
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            background-color: #f1f3f4;
+            border-radius: 15px;
+        }
+        .price-range {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .price-input {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div th:insert="~{header :: header}"></div>
+
+    <div class="container">
+        <!-- Breadcrumbs -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">All Products</li>
+            </ol>
+        </nav>
+
+        <div class="main-content">
+            <div class="filters">
+                <form th:action="@{/products}" method="get">
+                    <h2 class="h5 mb-3">Filters</h2>
+            
+                    <!-- Categories Filter -->
+                    <div class="filter-section">
+                        <div class="filter-title">Categories</div>
+                        <div class="filter-options">
+                            <!-- Dynamically load categories and keep selected categories -->
+                            <label th:each="category : ${categoryList}">
+                                <input type="checkbox" name="category" th:value="${category.id}"
+                                       th:checked="${categoryIds != null ? categoryIds.contains(category.id) : false}"> 
+                                <span th:text="${category.name}"></span>
+                            </label>
+                        </div>
+                    </div>
+            
+                    <!-- Price Range Filter -->
+                    <div class="filter-section">
+                        <div class="filter-title">Price Range</div>
+                        <div class="price-range">
+                            <input type="number" class="form-control price-input" name="minPrice" placeholder="Min"
+                                   th:value="${minPrice != null ? minPrice : ''}">
+                            <input type="number" class="form-control price-input" name="maxPrice" placeholder="Max"
+                                   th:value="${maxPrice != null ? maxPrice : ''}">
+                        </div>
+                    </div>
+
+
+                    <!-- Apply Filters Button -->
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </form>
+            
+                <!-- Clear Filters Button -->
+                <a href="/products" class="btn btn-secondary w-100 mt-2">Clear Filters</a>
+            </div>
+            
+            
+            <div class="product-grid">
+                <div th:each="product : ${products}" class="product-card">
+                    <a th:href="@{/products/{id}(id=${product.id})}"></a>
+                    <div class="product-image">
+                        <img th:src="${productImages[product.id]}" th:alt="${product.name}" />
+                    </div>
+                    <div class="product-info">
+                        <h2 class="product-title" th:text="${product.name}">Product Name</h2>
+                        <div class="product-price" th:text="${#numbers.formatCurrency(product.price)}">Price</div>
+                        <div class="product-stock" th:text="${product.stockQuantity + ' in stock'}">Stock Quantity</div>
+                        <div class="product-category" th:text="${product.category.name}">Category</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center mt-12">
+                <!-- Previous Page Link -->
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/products(size=${size}, page=${currentPage - 1})}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <!-- Page Numbers -->
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/products(size=${size}, page=${i})}" th:text="${i + 1}">1</a>
+                </li>
+
+                <!-- Next Page Link -->
+                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/products(size=${size}, page=${currentPage + 1})}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Footer -->
+    <div th:insert="~{footer :: footer}"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let startTime = Date.now();
+
+            function getFilters() {
+                const selectedCategories = [];
+                document.querySelectorAll('input[name="category"]:checked').forEach(el => {
+                    selectedCategories.push(el.value);
+                });
+
+                const minPrice = parseFloat(document.querySelector('input[name="minPrice"]').value) || null;
+                const maxPrice = parseFloat(document.querySelector('input[name="maxPrice"]').value) || null;
+
+                console.log('Price Filter:', { min: minPrice, max: maxPrice });
+                console.log('Selected Categories:', selectedCategories);
+
+                return {
+                    category: selectedCategories,
+                    price: {
+                        min: minPrice,
+                        max: maxPrice
+                    }
+                };
+            }
+
+            // Send user activity using navigator.sendBeacon
+            function logUserActivity() {
+                const endTime = Date.now();
+                const activityDuration = (endTime - startTime) / 1000;  // Time spent in seconds
+
+                const filterData = getFilters();
+
+                // Check if the search input exists and if a search term was entered
+                const searchFilter = document.querySelector('input[name="searchFilter"]')
+                    ? document.querySelector('input[name="searchFilter"]').value.trim()
+                    : null;
+
+                // If the searchFilter is an empty string, set it to null
+                const searchFilterValue = searchFilter && searchFilter.length > 0 ? searchFilter : null;
+
+                const activityType = "browse"
+
+                // Preparing the data to send to the backend
+                const activityData = {
+                    activityType: activityType,
+                    activityDuration: activityDuration,
+                    filterType: {
+                        min: filterData.price.min,
+                        max: filterData.price.max,
+                        category: filterData.category.length > 0 ? filterData.category[0] : null  // Only send the first category
+                    },
+                    searchFilter: searchFilterValue
+                };
+
+                // Convert the data to a JSON string
+                const activityDataString = JSON.stringify(activityData);
+
+                // Log the prepared activity data and the stringified version before sending it
+                console.log('Prepared activityData:', activityData);
+                console.log('Sending data to the backend:', activityDataString);
+
+                // Use navigator.sendBeacon to send the data to the backend
+                navigator.sendBeacon("/activity/save-activity", activityDataString);
+            }
+
+            // Log the activity when the user leaves the page
+            window.addEventListener("beforeunload", logUserActivity);
+        });
+    </script>
+
+</body>
+</html>
