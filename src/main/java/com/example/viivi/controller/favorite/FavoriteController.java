@@ -96,7 +96,7 @@ public class FavoriteController {
                         user.getId(),
                         productId,
                         "remove_from_favorite",  // Activity type
-                        product.getCategoryId(), // Assuming you have a method to get the product category ID
+                        product.getCategoryId(), // method to get the product category ID
                         null,  // Activity duration can be set as needed
                         null,  // Min price filter
                         null,  // Max price filter
@@ -139,7 +139,7 @@ public class FavoriteController {
                         user.getId(),
                         productId,
                         "remove_from_favorite",  // Activity type
-                        product.getCategoryId(), // Assuming you have a method to get the product category ID
+                        product.getCategoryId(),
                         null,  // Activity duration can be set as needed
                         null,  // Min price filter
                         null,  // Max price filter
@@ -160,7 +160,7 @@ public class FavoriteController {
                         user.getId(),
                         productId,
                         "add_to_favorite",  // Activity type
-                        product.getCategoryId(), // Assuming you have a method to get the product category ID
+                        product.getCategoryId(),
                         null,  // Activity duration can be set as needed
                         null,  // Min price filter
                         null,  // Max price filter
