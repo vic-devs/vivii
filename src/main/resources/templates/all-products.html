@@ -162,7 +162,7 @@
 
 
                     <!-- Apply Filters Button -->
-                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                    <button id="applyFiltersButton" type="submit" class="btn btn-primary w-100">Apply Filters</button>
                 </form>
             
                 <!-- Clear Filters Button -->
@@ -224,17 +224,14 @@
             function getFilters() {
                 const selectedCategories = [];
                 document.querySelectorAll('input[name="category"]:checked').forEach(el => {
-                    selectedCategories.push(el.value);
+                    selectedCategories.push(el.value); // Collect all selected categories
                 });
 
                 const minPrice = parseFloat(document.querySelector('input[name="minPrice"]').value) || null;
                 const maxPrice = parseFloat(document.querySelector('input[name="maxPrice"]').value) || null;
 
-                console.log('Price Filter:', { min: minPrice, max: maxPrice });
-                console.log('Selected Categories:', selectedCategories);
-
                 return {
-                    category: selectedCategories,
+                    category: selectedCategories,  // Ensure all selected categories are captured in an array
                     price: {
                         min: minPrice,
                         max: maxPrice
@@ -254,36 +251,45 @@
                     ? document.querySelector('input[name="searchFilter"]').value.trim()
                     : null;
 
-                // If the searchFilter is an empty string, set it to null
                 const searchFilterValue = searchFilter && searchFilter.length > 0 ? searchFilter : null;
 
-                const activityType = "browse"
+                const activityType = "browse";
 
-                // Preparing the data to send to the backend
+                // Preparing the data to send to the backend, including all selected categories
                 const activityData = {
                     activityType: activityType,
                     activityDuration: activityDuration,
                     filterType: {
                         min: filterData.price.min,
                         max: filterData.price.max,
-                        category: filterData.category.length > 0 ? filterData.category[0] : null  // Only send the first category
+                        categories: filterData.category  // Send category as an array
                     },
                     searchFilter: searchFilterValue
                 };
 
-                // Convert the data to a JSON string
                 const activityDataString = JSON.stringify(activityData);
 
-                // Log the prepared activity data and the stringified version before sending it
-                console.log('Prepared activityData:', activityData);
-                console.log('Sending data to the backend:', activityDataString);
+                // Log to console for debugging
+                console.log("Logging activity data:", activityData);
 
                 // Use navigator.sendBeacon to send the data to the backend
                 navigator.sendBeacon("/activity/save-activity", activityDataString);
             }
 
-            // Log the activity when the user leaves the page
-            window.addEventListener("beforeunload", logUserActivity);
+            // Attach logUserActivity to the Apply Filters button using getElementById
+            const applyFilterButton = document.getElementById("applyFiltersButton");
+            if (applyFilterButton) {
+                applyFilterButton.addEventListener("click", function (event) {
+                    event.preventDefault(); // Prevent form submission for logging
+
+                    logUserActivity(); // Log activity data
+
+                    // Delay the form submission slightly to ensure the beacon is sent
+                    setTimeout(function() {
+                        applyFilterButton.closest('form').submit(); // Submit form after logging
+                    }, 100); // 100 milliseconds delay
+                });
+            }
         });
     </script>
 

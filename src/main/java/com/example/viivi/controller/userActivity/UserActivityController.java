@@ -31,47 +31,32 @@ import java.util.Map;
         @PostMapping(value = "/save-activity", consumes = "text/plain")
         @ResponseBody
         public ResponseEntity<String> saveUserActivity(@RequestBody String data, Authentication authentication) {
-            // Log to check if this endpoint is being triggered
             System.out.println("Save user activity endpoint triggered");
 
-            // Parse the plain text data to extract JSON
             Map<String, Object> jsonData = null;
             try {
-                jsonData = new ObjectMapper().readValue(data, new TypeReference<Map<String, Object>>() {
-                });
+                jsonData = new ObjectMapper().readValue(data, new TypeReference<Map<String, Object>>() {});
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
 
-            // Extract activityType from the JSON payload
-            String activityType = jsonData.get("activityType") != null ? (String) jsonData.get("activityType") : "browse"; // default to "browse" if not provided
-
-            // Extract activityDuration from the JSON data
+            String activityType = jsonData.get("activityType") != null ? (String) jsonData.get("activityType") : "browse";
             Double activityDuration = jsonData.get("activityDuration") != null ? ((Number) jsonData.get("activityDuration")).doubleValue() : null;
 
-            // Extract and handle filters safely
             Map<String, Object> filterTypeMap = jsonData.get("filterType") != null ? (Map<String, Object>) jsonData.get("filterType") : null;
 
-            // Extract productId if present
             Long productId = jsonData.get("productId") != null ? Long.valueOf(String.valueOf(jsonData.get("productId"))) : null;
-
-            // Extract productCategoryId if present
             Long productCategoryId = jsonData.get("productCategoryId") != null ? Long.valueOf(String.valueOf(jsonData.get("productCategoryId"))) : null;
-
-            // Extract searchFilter from the request
             String searchFilter = jsonData.get("searchFilter") != null ? (String) jsonData.get("searchFilter") : null;
-
-            // Fetch the logged-in user
+            Long orderId = jsonData.get("orderId") != null ? Long.valueOf(String.valueOf(jsonData.get("orderId"))) : null;
             String userEmail = authentication.getName();
             UserModel loggedInUser = userRepository.findByEmail(userEmail);
 
-            // Handle filters safely
             Double minPriceFilter = null;
             Double maxPriceFilter = null;
             Long categoryFilter = null;
 
             if (filterTypeMap != null) {
-                // Handle 'minPrice' filter safely
                 if (filterTypeMap.get("min") != null && filterTypeMap.get("min") instanceof Number) {
                     minPriceFilter = ((Number) filterTypeMap.get("min")).doubleValue();
                 }
@@ -80,35 +65,34 @@ import java.util.Map;
                     maxPriceFilter = ((Number) filterTypeMap.get("max")).doubleValue();
                 }
 
-                // Handle 'category' filter safely
-                if (filterTypeMap.get("category") instanceof List) {
-                    List<?> categoryList = (List<?>) filterTypeMap.get("category");
+                if (filterTypeMap.get("categories") instanceof List) {
+                    List<?> categoryList = (List<?>) filterTypeMap.get("categories");
                     if (!categoryList.isEmpty()) {
                         categoryFilter = Long.valueOf(categoryList.get(0).toString());
                     }
-                } else if (filterTypeMap.get("category") instanceof Number) {
-                    categoryFilter = Long.valueOf(((Number) filterTypeMap.get("category")).longValue());
                 }
             }
 
             System.out.println("Activity Type: " + activityType);
             System.out.println("Min Price Filter: " + minPriceFilter);
             System.out.println("Max Price Filter: " + maxPriceFilter);
+            System.out.println("Category Filter: " + categoryFilter);
 
-            // Save the user activity with the dynamically set activityType
             userActivityService.saveUserActivity(
                     loggedInUser.getId(),
                     productId,
-                    activityType,  // Use activityType from the front-end
+                    activityType,
                     productCategoryId,
                     minPriceFilter,
                     maxPriceFilter,
                     categoryFilter,
                     activityDuration,
-                    searchFilter
+                    searchFilter,
+                    orderId
             );
             System.out.println(activityType + " interaction logged for user: " + loggedInUser.getId());
 
             return ResponseEntity.ok("User activity logged successfully");
         }
+
     }

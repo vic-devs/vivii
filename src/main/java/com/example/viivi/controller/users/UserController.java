@@ -5,6 +5,7 @@ import com.example.viivi.models.category.CategoryRepository;
 import com.example.viivi.models.users.UserModel;
 import com.example.viivi.models.users.Role;
 import com.example.viivi.models.users.UserRepository;
+import com.example.viivi.service.UserActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,7 +14,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/users")
@@ -26,6 +29,9 @@ public class UserController {
 
     @Autowired
 private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     public UserController(UserRepository userRepository) {
@@ -67,23 +73,31 @@ private PasswordEncoder passwordEncoder;
     @GetMapping("/preferences")
     public String showPreferencesForm(Model model, Authentication authentication) {
         // Check if user is authenticated
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
             return "redirect:/users/login"; // Redirect to login if not authenticated
         }
 
-        // Fetch the logged-in user
+        // Fetch the logged-in user's email and user details
         String userEmail = authentication.getName();
         UserModel loggedInUser = userRepository.findByEmail(userEmail);
 
-        // Fetch the list of categories from the database
+        // Fetch the list of all categories from the database
         List<CategoryModel> categories = categoryRepository.findAll();
 
-        // Add the categories and user to the model
-        model.addAttribute("categories", categories);
-        model.addAttribute("user", loggedInUser);
+        // Collect user's top category IDs
+        List<Long> userPreferredCategories = new ArrayList<>();
+        if (loggedInUser.getTopCategory1() != null) userPreferredCategories.add(loggedInUser.getTopCategory1());
+        if (loggedInUser.getTopCategory2() != null) userPreferredCategories.add(loggedInUser.getTopCategory2());
+        if (loggedInUser.getTopCategory3() != null) userPreferredCategories.add(loggedInUser.getTopCategory3());
 
-        return "category-preferences"; // Ensure this matches your Thymeleaf template name
+        // Add the categories and user preferences to the model
+        model.addAttribute("categories", categories);
+        model.addAttribute("userPreferredCategories", userPreferredCategories);
+
+        return "category-preferences";
     }
+
+
 
     @PostMapping("/preferences")
     public String updatePreferences(@RequestParam(value = "preferredCategories", required = false) List<Long> preferredCategories,
@@ -101,9 +115,9 @@ private PasswordEncoder passwordEncoder;
         // Set the selected categories in the user model
         if (preferredCategories != null && preferredCategories.size() > 0) {
             // Set the top categories, ensuring no more than 3 categories are saved
-            loggedInUser.setTopCategory1(preferredCategories.size() > 0 ? Long.valueOf(preferredCategories.get(0).toString()) : null);
-            loggedInUser.setTopCategory2(preferredCategories.size() > 1 ? Long.valueOf(preferredCategories.get(1).toString()) : null);
-            loggedInUser.setTopCategory3(preferredCategories.size() > 2 ? Long.valueOf(preferredCategories.get(2).toString()) : null);
+            loggedInUser.setTopCategory1(preferredCategories.size() > 0 ? preferredCategories.get(0) : null);
+            loggedInUser.setTopCategory2(preferredCategories.size() > 1 ? preferredCategories.get(1) : null);
+            loggedInUser.setTopCategory3(preferredCategories.size() > 2 ? preferredCategories.get(2) : null);
         } else {
             // Reset categories if none are selected
             loggedInUser.setTopCategory1(null);
@@ -114,9 +128,24 @@ private PasswordEncoder passwordEncoder;
         // Update the user in the database
         userRepository.save(loggedInUser);
 
+        // Log user activity for updating preferred categories
+        userActivityService.saveUserActivity(
+                loggedInUser.getId(),
+                null,  // No specific product ID
+                "add_to_preferred_categories",  // Activity type
+                null,  // No specific product category
+                null,  // No min price filter
+                null,  // No max price filter
+                null,
+                null,  // No activity duration
+                null , // No search filter
+                null      // No order id
+        );
+
         // Add a success message and redirect back to the preferences page
         redirectAttributes.addFlashAttribute("message", "Preferences updated successfully.");
         return "redirect:/users/preferences";
     }
+
 
 }

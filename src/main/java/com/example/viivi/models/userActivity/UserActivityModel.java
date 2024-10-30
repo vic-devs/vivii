@@ -50,7 +50,12 @@ public class UserActivityModel {
     private Long topCategory3;
 
     @Column(name = "search_filter")
-    private String searchFilter; 
+    private String searchFilter;
+
+
+
+    @Column(name = "order_id")
+    private Long orderId;
 
     // Getters and Setters
     public Long getId() {
@@ -163,5 +168,13 @@ public class UserActivityModel {
 
     public void setSearchFilter(String searchFilter) {
         this.searchFilter = searchFilter;
+    }
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
     }
 }

@@ -10,6 +10,7 @@ import com.example.viivi.models.orders.OrdersRepository;
 import com.example.viivi.models.orders.OrderItemsRepository;
 import com.example.viivi.models.products.ProductRepository;
 import com.example.viivi.models.products.ProductModel;
+import com.example.viivi.service.UserActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -32,6 +33,9 @@ public class OrdersController {
 
     @Autowired
     private CartRepository cartRepository;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private ProductRepository productRepository;
@@ -62,29 +66,22 @@ public class OrdersController {
     @PostMapping("/checkout")
     public String checkoutOrder(@AuthenticationPrincipal UserModel user) {
         Optional<CartModel> cartOptional = cartRepository.findByUserIdWithItems(user.getId());
-    
+
         if (cartOptional.isPresent()) {
             CartModel cart = cartOptional.get();
             if (!cart.getItems().isEmpty()) {
-                // Create a new order using the updated constructor
                 OrdersModel order = new OrdersModel(user, BigDecimal.valueOf(cart.getTotalPrice()), "pending", new java.sql.Timestamp(System.currentTimeMillis()));
                 ordersRepository.save(order);
-    
-                // Save order items and update product stock
+
                 for (CartItemModel cartItem : cart.getItems()) {
                     ProductModel product = cartItem.getProduct();
-    
-                    // Check if there's enough stock
                     if (product.getStockQuantity() >= cartItem.getQuantity()) {
-                        // Deduct stock
                         product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
                         productRepository.save(product);
-    
-                        // Create and save order item
+
                         OrderItemsModel orderItem = new OrderItemsModel(order, product, cartItem.getQuantity(), cartItem.getPrice());
                         orderItemsRepository.save(orderItem);
                     } else {
-                        // If there's insufficient stock, you might want to handle this case (e.g., display an error)
                         return "redirect:/cart?error=insufficient_stock";
                     }
                 }
@@ -92,14 +89,29 @@ public class OrdersController {
                 // Clear the user's cart after placing the order
                 cart.getItems().clear();
                 cartRepository.save(cart);
-    
-                return "redirect:/orders"; // Redirect to the order list page after successful checkout
+
+                // Log user activity for checkout
+                userActivityService.saveUserActivity(
+                        user.getId(),
+                        null, // No specific product ID for the entire checkout action
+                        "completed_checkout", // Activity type for checkout
+                        null, // No specific product category ID
+                        null, // No min price filter
+                        null, // No max price filter
+                        null, // No category filter
+                        null, // Activity duration is not relevant for checkout
+                        null, // No search filter
+                        order.getId() // Set the order ID for the activity log
+                );
+
+                return "redirect:/orders";
             }
         }
-    
-        return "redirect:/cart"; // Redirect to cart if something goes wrong
+
+        return "redirect:/cart";
     }
-    
+
+
 
 
     // View all orders for the logged-in user

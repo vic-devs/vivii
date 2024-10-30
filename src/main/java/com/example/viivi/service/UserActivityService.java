@@ -25,7 +25,7 @@ public class UserActivityService {
      */
     public void saveUserActivity(Long userId, Long productId, String activityType, Long productCategoryId,
                                  Double minPriceFilter, Double maxPriceFilter, Long categoryFilter,
-                                 Double activityDuration, String searchFilter) {
+                                 Double activityDuration, String searchFilter, Long orderId) {
 
         // Create a new UserActivityModel instance
         UserActivityModel activity = new UserActivityModel();
@@ -63,6 +63,8 @@ public class UserActivityService {
 
         System.out.println("Min Price Filter: " + minPriceFilter);
         System.out.println("Max Price Filter: " + maxPriceFilter);
+
+        activity.setOrderId(orderId);
 
 
         // Retrieve the user's top category IDs from the UserModel and set in UserActivityModel
