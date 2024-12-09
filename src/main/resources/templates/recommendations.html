@@ -23,132 +23,13 @@
             Recommendations For You
             <span th:text="${userId}" class="text-indigo-500 text-2xl ml-2 opacity-80"></span>
         </h1>
-        <p class="text-gray-600 mt-2 text-lg">Here are some products you might like based on your preferences!</p>
+        <p class="text-gray-600 mt-2 text-lg">Here are some products you might like based on our hybrid model!</p>
     </header>
 
-    <p th:if="${#lists.isEmpty(popularProducts) && #lists.isEmpty(categoryRecommendations) && #lists.isEmpty(metadataRecommendations) && #lists.isEmpty(profileRecommendations) && #lists.isEmpty(hybridRecommendations)}"
+    <p th:if="${#lists.isEmpty(hybridRecommendations)}"
        class="text-center text-gray-600 py-12 bg-white rounded-lg shadow-md">
         No recommendations available.
     </p>
-
-
-    <!-- Section: Popular Products -->
-    <section class="mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Popular Products</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <div th:each="recommendation : ${popularProducts}"
-                 class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform transform hover:-translate-y-1 duration-200">
-
-                <div class="relative bg-gray-200">
-                    <img th:src="${recommendation.imageUrl}"
-                         alt="Product Image"
-                         class="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300">
-                    <div th:text="${recommendation.interactionValue != null ? #numbers.formatDecimal(recommendation.interactionValue * 100, 0, 0) + '%' : '0%'}"></div>
-
-
-                </div>
-
-                <div class="p-3 space-y-1">
-                    <span th:text="${recommendation.categoryName}"
-                          class="block text-xs font-semibold text-indigo-500 uppercase tracking-wide">Category</span>
-                    <h3 th:text="${recommendation.name}"
-                        class="text-sm font-semibold text-gray-900 line-clamp-2">Product Name</h3>
-                    <p class="text-lg font-bold text-gray-800"
-                       th:text="'$' + ${#numbers.formatDecimal(recommendation.price, 0, 2)}">$0.00</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section: Category-Based Recommendations -->
-    <section class="mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Based on Your Orders</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <div th:each="recommendation : ${categoryRecommendations}"
-                 class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform transform hover:-translate-y-1 duration-200">
-
-                <div class="relative bg-gray-200">
-                    <img th:src="${recommendation.imageUrl}"
-                         alt="Product Image"
-                         class="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300">
-<!--                    <div class="absolute top-2 right-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-1 rounded-md"-->
-<!--                         th:text="${recommendation.interactionValue != null ? #numbers.formatDecimal(recommendation.interactionValue * 100, 0, 0) + '%' : ''}">-->
-<!--                    </div>-->
-
-
-                </div>
-
-                <div class="p-3 space-y-1">
-                    <span th:text="${recommendation.categoryName}"
-                          class="block text-xs font-semibold text-indigo-500 uppercase tracking-wide">Category</span>
-                    <h3 th:text="${recommendation.name}"
-                        class="text-sm font-semibold text-gray-900 line-clamp-2">Product Name</h3>
-                    <p class="text-lg font-bold text-gray-800"
-                       th:text="'$' + ${#numbers.formatDecimal(recommendation.price, 0, 2)}">$0.00</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section: Metadata-Based Recommendations -->
-    <section class="mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Similar to What You Like</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <div th:each="recommendation : ${metadataRecommendations}"
-                 class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform transform hover:-translate-y-1 duration-200">
-
-                <div class="relative bg-gray-200">
-                    <img th:src="${recommendation.imageUrl}"
-                         alt="Product Image"
-                         class="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300">
-<!--                    <div class="absolute top-2 right-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-1 rounded-md"-->
-<!--                         th:text="${recommendation.interactionValue != null ? #numbers.formatDecimal(recommendation.interactionValue * 100, 0, 0) + '%' : ''}">-->
-<!--                    </div>-->
-
-
-                </div>
-
-                <div class="p-3 space-y-1">
-                    <span th:text="${recommendation.categoryName}"
-                          class="block text-xs font-semibold text-indigo-500 uppercase tracking-wide">Category</span>
-                    <h3 th:text="${recommendation.name}"
-                        class="text-sm font-semibold text-gray-900 line-clamp-2">Product Name</h3>
-                    <p class="text-lg font-bold text-gray-800"
-                       th:text="'$' + ${#numbers.formatDecimal(recommendation.price, 0, 2)}">$0.00</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section: Profile-Based Recommendations -->
-    <section class="mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Personalized for You</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <div th:each="recommendation : ${profileRecommendations}"
-                 class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform transform hover:-translate-y-1 duration-200">
-
-                <div class="relative bg-gray-200">
-                    <img th:src="${recommendation.imageUrl}"
-                         alt="Product Image"
-                         class="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300">
-<!--                    <div class="absolute top-2 right-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-1 rounded-md"-->
-<!--                         th:text="${recommendation.interactionValue != null ? #numbers.formatDecimal(recommendation.interactionValue * 100, 0, 0) + '%' : ''}">-->
-<!--                    </div>-->
-
-
-                </div>
-
-                <div class="p-3 space-y-1">
-                    <span th:text="${recommendation.categoryName}"
-                          class="block text-xs font-semibold text-indigo-500 uppercase tracking-wide">Category</span>
-                    <h3 th:text="${recommendation.name}"
-                        class="text-sm font-semibold text-gray-900 line-clamp-2">Product Name</h3>
-                    <p class="text-lg font-bold text-gray-800"
-                       th:text="'$' + ${#numbers.formatDecimal(recommendation.price, 0, 2)}">$0.00</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- Section: Hybrid Recommendations -->
     <section class="mb-8">
@@ -172,7 +53,7 @@
                     <h3 th:text="${recommendation.name}"
                         class="text-sm font-semibold text-gray-900 line-clamp-2">Product Name</h3>
                     <p class="text-lg font-bold text-gray-800"
-                       th:text="'$' + ${#numbers.formatDecimal(recommendation.price, 0, 2)}">$0.00</p>
+                       th:text="'$' + ${#numbers.formatDecimal(recommendation.price, 0, 2)}">£0.00</p>
                 </div>
             </div>
         </div>

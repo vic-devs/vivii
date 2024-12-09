@@ -25,8 +25,7 @@ public class RecommendationController {
     public String getRecommendations(
             @RequestParam(defaultValue = "10") int n,
             @RequestParam(defaultValue = "false") boolean isContentBased,
-            @RequestParam(defaultValue = "0.6") double knnWeight,
-            @RequestParam(defaultValue = "0.4") double svdWeight,
+            @RequestParam(defaultValue = "1.2") double boostFactor,
             Model model) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -34,17 +33,17 @@ public class RecommendationController {
         Long userId = user.getId();
 
         // Fetch different types of recommendations
-        List<RecommendationDto> popularProducts = recommendationService.getPopularProductsForUser(userId.intValue(), n);
-        List<RecommendationDto> categoryRecommendations = recommendationService.getSimilarOrderedProductRecommendations(userId.intValue(), n);// Example category IDs
-        List<RecommendationDto> metadataRecommendations = recommendationService.getMetadataBasedRecommendations(userId.intValue(), n);
-        List<RecommendationDto> profileRecommendations = recommendationService.getProfileBasedRecommendations(userId.intValue(), n);
-        List<RecommendationDto> hybridRecommendations = recommendationService.getHybridRecommendations(userId.intValue(), n, knnWeight, svdWeight);
+//        List<RecommendationDto> popularProducts = recommendationService.getPopularProductsForUser(userId.intValue(), n);
+//        List<RecommendationDto> categoryRecommendations = recommendationService.getSimilarOrderedProductRecommendations(userId.intValue(), n);// Example category IDs
+//        List<RecommendationDto> metadataRecommendations = recommendationService.getMetadataBasedRecommendations(userId.intValue(), n);
+//        List<RecommendationDto> profileRecommendations = recommendationService.getProfileBasedRecommendations(userId.intValue(), n);
+        List<RecommendationDto> hybridRecommendations = recommendationService.getHybridRecommendations(userId.intValue(), n, boostFactor);
 
         // Add data to the model
-        model.addAttribute("popularProducts", popularProducts);
-        model.addAttribute("categoryRecommendations", categoryRecommendations);
-        model.addAttribute("metadataRecommendations", metadataRecommendations);
-        model.addAttribute("profileRecommendations", profileRecommendations);
+//        model.addAttribute("popularProducts", popularProducts);
+//        model.addAttribute("categoryRecommendations", categoryRecommendations);
+//        model.addAttribute("metadataRecommendations", metadataRecommendations);
+//        model.addAttribute("profileRecommendations", profileRecommendations);
         model.addAttribute("hybridRecommendations", hybridRecommendations);
         model.addAttribute("userId", userId);
 

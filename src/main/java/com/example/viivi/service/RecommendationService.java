@@ -2,8 +2,10 @@ package com.example.viivi.service;
 
 import com.example.viivi.models.category.CategoryModel;
 import com.example.viivi.models.category.CategoryRepository;
+import com.example.viivi.models.products.ProductModel;
 import com.example.viivi.models.products.ProductPhotosModel;
 import com.example.viivi.models.products.ProductPhotosRepository;
+import com.example.viivi.models.products.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -26,39 +28,44 @@ public class RecommendationService {
     private ProductPhotosRepository productPhotosRepository;
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
     private CategoryRepository categoryRepository;
 
     private static final String API_URL = "http://127.0.0.1:7000";
 
-    public List<RecommendationDto> getPopularProductsForUser(int userId, int numRecommendations) {
-        return fetchRecommendations(userId, numRecommendations, "/recommend/popular");
-    }
+//    public List<RecommendationDto> getPopularProductsForUser(int userId, int numRecommendations) {
+//        return fetchRecommendations(userId, numRecommendations, "/recommend/popular");
+//    }
+//
+//    public List<RecommendationDto> getSimilarOrderedProductRecommendations(int userId, int numRecommendations) {
+//        String url = UriComponentsBuilder.fromHttpUrl(API_URL + "/recommend/orders")
+//                .queryParam("user_id", userId)
+//                .queryParam("n", numRecommendations)
+//                .toUriString();
+//
+//        return fetchRecommendationsFromUrl(url);
+//    }
+//
+//
+//    public List<RecommendationDto> getMetadataBasedRecommendations(int userId, int numRecommendations) {
+//        return fetchRecommendations(userId, numRecommendations, "/recommend/metadata");
+//    }
+//
+//    public List<RecommendationDto> getProfileBasedRecommendations(int userId, int numRecommendations) {
+//        return fetchRecommendations(userId, numRecommendations, "/recommend/profile");
+//    }
 
-    public List<RecommendationDto> getSimilarOrderedProductRecommendations(int userId, int numRecommendations) {
-        String url = UriComponentsBuilder.fromHttpUrl(API_URL + "/recommend/orders")
-                .queryParam("user_id", userId)
-                .queryParam("n", numRecommendations)
-                .toUriString();
-
-        return fetchRecommendationsFromUrl(url);
-    }
-
-
-    public List<RecommendationDto> getMetadataBasedRecommendations(int userId, int numRecommendations) {
-        return fetchRecommendations(userId, numRecommendations, "/recommend/metadata");
-    }
-
-    public List<RecommendationDto> getProfileBasedRecommendations(int userId, int numRecommendations) {
-        return fetchRecommendations(userId, numRecommendations, "/recommend/profile");
-    }
-
-    public List<RecommendationDto> getHybridRecommendations(int userId, int numRecommendations, double knnWeight, double svdWeight) {
+    public List<RecommendationDto> getHybridRecommendations(int userId, int numRecommendations, double boostFactor) {
+        // Build the URL dynamically with required query parameters
         String url = UriComponentsBuilder.fromHttpUrl(API_URL + "/recommend/hybrid")
                 .queryParam("user_id", userId)
-                .queryParam("n", numRecommendations)
-                .queryParam("weights", knnWeight + "," + svdWeight)
+                .queryParam("top_n", numRecommendations)
+                .queryParam("boost_factor", boostFactor)
                 .toUriString();
 
+        // Fetch recommendations from the Flask API
         return fetchRecommendationsFromUrl(url);
     }
 
@@ -72,44 +79,48 @@ public class RecommendationService {
     }
 
     private List<RecommendationDto> fetchRecommendationsFromUrl(String url) {
-        ResponseEntity<List<Map<String, Object>>> responseEntity = restTemplate.exchange(
+        ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                new ParameterizedTypeReference<Map<String, Object>>() {}
         );
 
         List<RecommendationDto> recommendations = new ArrayList<>();
-        List<Map<String, Object>> recommendationData = responseEntity.getBody();
+        Map<String, Object> recommendationData = responseEntity.getBody();
 
-        if (recommendationData != null) {
-            for (Map<String, Object> item : recommendationData) {
+        if (recommendationData != null && recommendationData.containsKey("recommendations")) {
+            List<Map<String, Object>> recommendationList = (List<Map<String, Object>>) recommendationData.get("recommendations");
+            for (Map<String, Object> item : recommendationList) {
                 RecommendationDto dto = new RecommendationDto();
 
-                // Safely set each field with null checks
                 dto.setProductId(item.get("product_id") != null ? ((Number) item.get("product_id")).intValue() : null);
-                dto.setName((String) item.getOrDefault("name", "Unknown Product"));
-                dto.setPrice(item.get("price") != null ? ((Number) item.get("price")).doubleValue() : null);
                 dto.setCategoryId(item.get("category_id") != null ? ((Number) item.get("category_id")).intValue() : null);
-                dto.setPredictedScore(item.get("predicted_score") != null ? ((Number) item.get("predicted_score")).doubleValue() : null);
+                dto.setPredictedScore(item.get("score") != null ? ((Number) item.get("score")).doubleValue() : null);
 
-                double interactionValue = item.get("interaction_value") != null ? ((Number) item.get("interaction_value")).doubleValue() : 0.0;
-                if (interactionValue > 1) {
-                    interactionValue = interactionValue / 100;
-                }
-                dto.setInteractionValue(interactionValue);
-
-
-
-                // Fetch primary photo URL using the product ID, if available
+                // Fetch product details using product ID
                 if (dto.getProductId() != null) {
-                    ProductPhotosModel primaryPhoto = productPhotosRepository.findByProductIdAndIsPrimaryTrue((long) dto.getProductId());
-                    if (primaryPhoto != null) {
-                        dto.setImageUrl(primaryPhoto.getPhotoUrl());
+                    ProductModel product = productRepository.findById((long) dto.getProductId()).orElse(null);
+                    if (product != null) {
+                        dto.setName(product.getName());
+
+                        // Convert BigDecimal to Double
+                        if (product.getPrice() != null) {
+                            dto.setPrice(product.getPrice().doubleValue());
+                        }
+
+                        // Fetch the primary photo for the product
+                        ProductPhotosModel primaryPhoto = productPhotosRepository.findByProductIdAndIsPrimaryTrue((long) dto.getProductId());
+                        if (primaryPhoto != null) {
+                            dto.setImageUrl(primaryPhoto.getPhotoUrl());
+                        } else {
+                            // Fallback URL if no image is available
+                            dto.setImageUrl("/images/default-image.jpg");
+                        }
                     }
                 }
 
-                // Fetch category name using category ID, if available
+                // Fetch category name using category ID
                 if (dto.getCategoryId() != null) {
                     CategoryModel category = categoryRepository.findById((long) dto.getCategoryId()).orElse(null);
                     if (category != null) {
